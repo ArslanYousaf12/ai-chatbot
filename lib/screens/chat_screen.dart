@@ -34,14 +34,35 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messgaes.insert(0, m);
     });
-    List<Messages> _messageHistory =
+    List<Map<String, dynamic>> _messageHistory =
         _messgaes.reversed.map((m) {
           if (m.user == _currentUser) {
-            return Messages(role: Role.user, content: m.text);
+            return Messages(role: Role.user, content: m.text).toJson();
           } else {
-            return Messages(role: Role.assistant, content: m.text);
+            return Messages(role: Role.assistant, content: m.text).toJson();
           }
         }).toList();
+    final request = ChatCompleteText(
+      model:
+          GptTurbo0301ChatModel(), // Updated to use the latest non-deprecated model
+      messages: _messageHistory,
+      maxToken: 200,
+    );
+    final response = await _openAi.onChatCompletion(request: request);
+    for (var element in response!.choices) {
+      if (element.message != null) {
+        setState(() {
+          _messgaes.insert(
+            0,
+            ChatMessage(
+              user: _gptChatUser,
+              createdAt: DateTime.now(),
+              text: element.message!.content,
+            ),
+          );
+        });
+      }
+    }
   }
 
   @override
