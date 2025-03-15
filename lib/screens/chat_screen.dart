@@ -1,3 +1,5 @@
+import 'package:ai_chatbot/const.dart';
+import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +11,11 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final _openAi = OpenAI.instance.build(
+    token: OPENAI_API_KEY,
+    baseOption: HttpSetup(receiveTimeout: Duration(seconds: 5)),
+    enableLog: true,
+  );
   final ChatUser _currentUser = ChatUser(
     id: '1',
     firstName: "Arslan",
@@ -24,6 +31,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> getChatResponse(ChatMessage m) async {
     debugPrint(m.text);
+    setState(() {
+      _messgaes.insert(0, m);
+    });
+    List<Messages> _messageHistory =
+        _messgaes.reversed.map((m) {
+          if (m.user == _currentUser) {
+            return Messages(role: Role.user, content: m.text);
+          } else {
+            return Messages(role: Role.assistant, content: m.text);
+          }
+        }).toList();
   }
 
   @override
@@ -35,6 +53,11 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: DashChat(
         currentUser: _currentUser,
+        messageOptions: const MessageOptions(
+          currentUserContainerColor: Colors.black,
+          containerColor: Color.fromRGBO(0, 166, 126, 1),
+          textColor: Colors.white,
+        ),
         onSend: (message) {
           getChatResponse(message);
         },
